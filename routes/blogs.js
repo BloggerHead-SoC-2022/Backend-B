@@ -29,7 +29,8 @@ router.post('/', async (req, res) => {
     const newBlog = new blogDB({
         title: req.body.title,
         author: req.body.author,
-        content: req.body.content
+        content: req.body.content,
+        userId: req.body.userId
     });
 
     try{
@@ -49,6 +50,7 @@ router.put('/:id', async (req, res) => {
         oldBlog.title = updBlog.title ? updBlog.title: oldBlog.title;
         oldBlog.author = updBlog.author ? updBlog.author: oldBlog.author;
         oldBlog.content = updBlog.content ? updBlog.content: oldBlog.content;
+        oldBlog.userId = updBlog.userId ? updBlog.userId: oldBlog.userId;
         await oldBlog.save();
         const allBlogs = await blogDB.find();
         res.json(allBlogs);
