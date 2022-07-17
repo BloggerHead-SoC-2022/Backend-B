@@ -52,8 +52,8 @@ router.put('/:id', async (req, res) => {
         oldBlog.content = updBlog.content ? updBlog.content: oldBlog.content;
         oldBlog.userId = updBlog.userId ? updBlog.userId: oldBlog.userId;
         await oldBlog.save();
-        const allBlogs = await blogDB.find();
-        res.json(allBlogs);
+        // const allBlogs = await blogDB.find();
+        res.status(200).json({oldBlog});
     } catch(e){
         res.send('error' + e)
     }

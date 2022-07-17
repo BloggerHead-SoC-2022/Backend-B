@@ -118,15 +118,21 @@ router.put('/:id', async (req, res) => {
     try{
         const oldUser = await db.findById(req.params.id);
 
-
-        if(newUser.emailId){
+        const theUser3 = await db.findOne({ emailId: req.body.emailId });
+        if(theUser3){
+            
+            if(theUser3.emailId===oldUser.emailId){   
+                oldUser.emailId = newUser.emailId;
+            }
+            else{
+                return res.status(400).json({ msg: "Already an account exists from this Email ID!"});
+            }
+        }
+        else{
             if(!regexEmail.test(newUser.emailId)){
                 return res.status(400).json({ msg: 'Please provide us with a valid email ID!' });
             }
             oldUser.emailId = newUser.emailId;
-        }
-        else{
-            oldUser.emailId = oldUser.emailId;
         }
 
 
@@ -151,40 +157,63 @@ router.put('/:id', async (req, res) => {
             oldUser.lastname = oldUser.lastname;
         }
 
-
-        if(newUser.username){
+        const theUser4 = await db.findOne({ username: req.body.username });
+        if(theUser4){
+            if(theUser4.username===oldUser.username){   
+                oldUser.username = newUser.username;
+            }
+            else{
+                return res.status(400).json({ msg: 'The username has been taken, please choose another username!' });
+            }
+        }
+        else{
             if(!regexUsername.test(newUser.username)){
                 return res.status(400).json({ msg: 'The username can only contain alphabets, numbers and _ ' });
             }
             oldUser.username = newUser.username;
         }
-        else{
-            oldUser.username = oldUser.username;
+            
+        
+        if(!newUser.oldPassword && (newUser.newPassword || newUser.password_confirm)){
+            return res.status(400).json({ msg: 'If you want to update the password, then please provide us with your current password!' });
         }
-
-
-        if(newUser.password && !newUser.password_confirm){
-            return res.status(400).json({ msg: 'If you want to update the password, then please also provide password_confirm' });
-        }
-        else if(newUser.password && newUser.password_confirm){
-            if(newUser.password != newUser.password_confirm){
-                return res.status(400).json({ msg: 'The password does not matches with password_confirm!' });
+        if(newUser.oldPassword){
+            const pass = await bcrypt.compare(newUser.oldPassword, oldUser.password);
+            if(pass){
+                if(newUser.newPassword && !newUser.password_confirm){
+                    return res.status(400).json({ msg: 'If you want to update the password, then please also provide password_confirm' });
+                }
+                else if(!newUser.newPassword && newUser.password_confirm){
+                    return res.status(400).json({ msg: 'If you want to update the password, then please also provide New Password' });
+                }
+                else if(newUser.newPassword && newUser.password_confirm){
+                    if(newUser.newPassword != newUser.password_confirm){
+                        return res.status(400).json({ msg: 'The password does not matches with password_confirm!' });
+                    }
+                    if(!regexPassword.test(newUser.newPassword)){
+                        return res.status(400).json({ msg: 'The password should be atleast 8 characters long!' });
+                    };
+                    const salt = await bcrypt.genSalt(10);
+                    newUser.newPassword = await bcrypt.hash(newUser.newPassword, salt);
+                    oldUser.password = newUser.newPassword;
+                }
+                else{
+                    oldUser.password = oldUser.password;
+                }
             }
-            if(!regexPassword.test(newUser.password)){
-                return res.status(400).json({ msg: 'The password should be atleast 8 characters long!' });
-            };
-            const salt = await bcrypt.genSalt(10);
-            newUser.password = await bcrypt.hash(newUser.password, salt);
-            oldUser.password = newUser.password;
+            else{
+                return res.status(400).json({ msg: 'The password is incorrect!' });
+            }
         }
         else{
             oldUser.password = oldUser.password;
         }
 
 
+
         await oldUser.save();
-        const allUsers = await db.find();
-        res.json(allUsers);
+        // const allUsers = await db.find();
+        res.status(200).json({oldUser});
     } catch(e){
         res.send('error' + e)
     }
