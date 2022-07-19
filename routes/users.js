@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../models/userModel');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const createJWT = require('../utils/auth');
 
 const regexEmail = new RegExp(/^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+$/);
@@ -118,6 +117,7 @@ router.put('/:id', async (req, res) => {
     try{
         const oldUser = await db.findById(req.params.id);
 
+
         const theUser3 = await db.findOne({ emailId: req.body.emailId });
         if(theUser3){
             
@@ -157,6 +157,7 @@ router.put('/:id', async (req, res) => {
             oldUser.lastname = oldUser.lastname;
         }
 
+
         const theUser4 = await db.findOne({ username: req.body.username });
         if(theUser4){
             if(theUser4.username===oldUser.username){   
@@ -172,8 +173,11 @@ router.put('/:id', async (req, res) => {
             }
             oldUser.username = newUser.username;
         }
-            
-        
+
+
+
+
+
         if(!newUser.oldPassword && (newUser.newPassword || newUser.password_confirm)){
             return res.status(400).json({ msg: 'If you want to update the password, then please provide us with your current password!' });
         }
@@ -209,10 +213,8 @@ router.put('/:id', async (req, res) => {
             oldUser.password = oldUser.password;
         }
 
-
-
         await oldUser.save();
-        // const allUsers = await db.find();
+        //const allUsers = await db.find();
         res.status(200).json({oldUser});
     } catch(e){
         res.send('error' + e)
